@@ -30,7 +30,7 @@ interface TournamentStore {
   reorderBlindLevels: (orderedIds: string[]) => void;
 
   // Players
-  addPlayer: (name: string) => Player;
+  addPlayer: (name: string) => Player | null;
   removePlayer: (id: string) => void;
   updatePlayer: (id: string, changes: Partial<Player>) => void;
   eliminatePlayer: (id: string) => void;
@@ -285,6 +285,13 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
   // ─── Players ────────────────────────────────────────────────────────────────
 
   addPlayer: (name) => {
+    const state = get();
+    if (state.tournament) {
+      const duplicate = state.tournament.players.some(
+        (p) => p.name.toLowerCase() === name.toLowerCase()
+      );
+      if (duplicate) return null;
+    }
     const player: Player = {
       id: uuidv4(),
       name,
@@ -475,18 +482,28 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
   importPlayers: (names) => {
     set((s) => {
       if (!s.tournament) return s;
-      const newPlayers: Player[] = names
-        .filter((n) => n.trim())
-        .map((name) => ({
+      const seenNames = new Set(
+        s.tournament.players.map((p) => p.name.toLowerCase())
+      );
+      const newPlayers: Player[] = [];
+      for (const n of names) {
+        const trimmed = n.trim();
+        if (!trimmed) continue;
+        const lower = trimmed.toLowerCase();
+        if (seenNames.has(lower)) continue;
+        seenNames.add(lower);
+        newPlayers.push({
           id: uuidv4(),
-          name: name.trim(),
+          name: trimmed,
           status: 'active' as PlayerStatus,
           tableId: null,
           seatNumber: null,
           buyInCount: 1,
           addOnCount: 0,
           registeredAt: new Date().toISOString(),
-        }));
+        });
+      }
+      if (newPlayers.length === 0) return s;
       const players = [...s.tournament.players, ...newPlayers];
       const prizeSnapshot = computePrizeSnapshot(players, s.tournament.prizeConfig);
       const payoutStructure = calculatePayouts(prizeSnapshot.netPool, players.length);
