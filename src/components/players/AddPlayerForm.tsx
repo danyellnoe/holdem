@@ -5,13 +5,20 @@ export function AddPlayerForm() {
   const [name, setName] = useState('');
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkText, setBulkText] = useState('');
+  const [error, setError] = useState('');
+  const [skippedCount, setSkippedCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { addPlayer, importPlayers } = useTournamentStore();
+  const { addPlayer, importPlayers, tournament } = useTournamentStore();
 
   const handleAdd = () => {
     if (!name.trim()) return;
-    addPlayer(name.trim());
-    setName('');
+    const result = addPlayer(name.trim());
+    if (result === null) {
+      setError(`"${name.trim()}" is already in the player list.`);
+    } else {
+      setError('');
+      setName('');
+    }
     inputRef.current?.focus();
   };
 
@@ -21,7 +28,23 @@ export function AddPlayerForm() {
       .map((n) => n.trim())
       .filter(Boolean);
     if (names.length > 0) {
-      importPlayers(names);
+      const existingNames = new Set(
+        (tournament?.players ?? []).map((p) => p.name.toLowerCase())
+      );
+      const seenInBulk = new Set<string>();
+      const uniqueNewNames: string[] = [];
+      for (const n of names) {
+        const lower = n.toLowerCase();
+        if (!existingNames.has(lower) && !seenInBulk.has(lower)) {
+          uniqueNewNames.push(n);
+          seenInBulk.add(lower);
+        }
+      }
+      const skipped = names.length - uniqueNewNames.length;
+      setSkippedCount(skipped);
+      if (uniqueNewNames.length > 0) {
+        importPlayers(uniqueNewNames);
+      }
       setBulkText('');
       setBulkMode(false);
     }
@@ -32,7 +55,7 @@ export function AddPlayerForm() {
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-white">Add Players</h2>
         <button
-          onClick={() => setBulkMode(!bulkMode)}
+          onClick={() => { setBulkMode(!bulkMode); setError(''); setSkippedCount(0); }}
           className="text-xs text-gray-400 hover:text-white transition-colors"
         >
           {bulkMode ? 'Single' : 'Bulk import'}
@@ -40,25 +63,36 @@ export function AddPlayerForm() {
       </div>
 
       {!bulkMode ? (
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            placeholder="Player name..."
-            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2
-              text-white text-sm outline-none focus:border-green-500 placeholder-gray-500"
-          />
-          <button
-            onClick={handleAdd}
-            disabled={!name.trim()}
-            className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-40
-              disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
-          >
-            Add
-          </button>
+        <div className="space-y-1">
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              placeholder="Player name..."
+              className={`flex-1 bg-gray-700 border rounded-lg px-3 py-2
+                text-white text-sm outline-none focus:border-green-500 placeholder-gray-500
+                ${error ? 'border-red-500' : 'border-gray-600'}`}
+            />
+            <button
+              onClick={handleAdd}
+              disabled={!name.trim()}
+              className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-40
+                disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+            >
+              Add
+            </button>
+          </div>
+          {error && (
+            <p className="text-xs text-red-400">{error}</p>
+          )}
+          {skippedCount > 0 && (
+            <p className="text-xs text-yellow-400">
+              {skippedCount} duplicate{skippedCount > 1 ? 's' : ''} skipped.
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
