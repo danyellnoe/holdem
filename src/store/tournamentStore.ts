@@ -4,7 +4,7 @@ import { Tournament, TournamentSettings, TournamentStatus } from '../types/tourn
 import { BlindLevel, BlindStructure } from '../types/blind';
 import { Player, PlayerStatus } from '../types/player';
 import { Table, Seat } from '../types/table';
-import { PrizeConfig } from '../types/prize';
+import { PrizeConfig, BuyInEvent } from '../types/prize';
 import { BLIND_PRESETS, clonePreset, renumberLevels } from '../lib/blindPresets';
 import { calculatePayouts } from '../lib/payoutCalculator';
 import { saveTournament, loadTournament } from '../lib/localPersistence';
@@ -36,6 +36,8 @@ interface TournamentStore {
   eliminatePlayer: (id: string) => void;
   addRebuy: (id: string) => void;
   addAddOn: (id: string) => void;
+  removeRebuy: (id: string) => void;
+  removeAddOn: (id: string) => void;
   importPlayers: (names: string[]) => void;
 
   // Tables
@@ -129,7 +131,26 @@ function buildInitialTournament(
     completedAt: null,
     lastSavedAt: new Date().toISOString(),
     version: 0,
+    buyInEvents: [],
   };
+}
+
+function appendBuyInEvent(
+  events: BuyInEvent[],
+  playerId: string,
+  type: BuyInEvent['type'],
+  levelIndex?: number
+): BuyInEvent[] {
+  return [
+    ...events,
+    {
+      id: uuidv4(),
+      playerId,
+      type,
+      timestamp: new Date().toISOString(),
+      levelIndex,
+    },
+  ];
 }
 
 export const useTournamentStore = create<TournamentStore>()((set, get) => ({
@@ -144,7 +165,11 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
 
   loadTournamentById: (id) => {
     const t = loadTournament(id);
-    if (t) set({ tournament: t });
+    if (t) {
+      // Migrate older tournaments: ensure buyInEvents exists
+      const tournament = t.buyInEvents ? t : { ...t, buyInEvents: [] as BuyInEvent[] };
+      set({ tournament });
+    }
   },
 
   persistTournament: () => {
@@ -342,24 +367,108 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
   addRebuy: (id) => {
     set((s) => {
       if (!s.tournament) return s;
+      const events = appendBuyInEvent(
+        s.tournament.buyInEvents ?? [],
+        id,
+        'rebuy',
+        s.tournament.currentLevelIndex
+      );
       const players = s.tournament.players.map((p) =>
         p.id === id ? { ...p, buyInCount: p.buyInCount + 1, status: 'active' as PlayerStatus } : p
       );
       const prizeSnapshot = computePrizeSnapshot(players, s.tournament.prizeConfig);
       const payoutStructure = calculatePayouts(prizeSnapshot.netPool, players.length);
-      return { tournament: { ...s.tournament, players, prizeSnapshot, payoutStructure } };
+      return {
+        tournament: {
+          ...s.tournament,
+          players,
+          prizeSnapshot,
+          payoutStructure,
+          buyInEvents: events,
+        },
+      };
     });
   },
 
   addAddOn: (id) => {
     set((s) => {
       if (!s.tournament) return s;
+      const events = appendBuyInEvent(
+        s.tournament.buyInEvents ?? [],
+        id,
+        'addon',
+        s.tournament.currentLevelIndex
+      );
       const players = s.tournament.players.map((p) =>
         p.id === id ? { ...p, addOnCount: p.addOnCount + 1 } : p
       );
       const prizeSnapshot = computePrizeSnapshot(players, s.tournament.prizeConfig);
       const payoutStructure = calculatePayouts(prizeSnapshot.netPool, players.length);
-      return { tournament: { ...s.tournament, players, prizeSnapshot, payoutStructure } };
+      return {
+        tournament: {
+          ...s.tournament,
+          players,
+          prizeSnapshot,
+          payoutStructure,
+          buyInEvents: events,
+        },
+      };
+    });
+  },
+
+  removeRebuy: (id) => {
+    set((s) => {
+      if (!s.tournament) return s;
+      const player = s.tournament.players.find((p) => p.id === id);
+      if (!player || player.buyInCount <= 1) return s;
+      const events = appendBuyInEvent(
+        s.tournament.buyInEvents ?? [],
+        id,
+        'remove_rebuy',
+        s.tournament.currentLevelIndex
+      );
+      const players = s.tournament.players.map((p) =>
+        p.id === id ? { ...p, buyInCount: p.buyInCount - 1 } : p
+      );
+      const prizeSnapshot = computePrizeSnapshot(players, s.tournament.prizeConfig);
+      const payoutStructure = calculatePayouts(prizeSnapshot.netPool, players.length);
+      return {
+        tournament: {
+          ...s.tournament,
+          players,
+          prizeSnapshot,
+          payoutStructure,
+          buyInEvents: events,
+        },
+      };
+    });
+  },
+
+  removeAddOn: (id) => {
+    set((s) => {
+      if (!s.tournament) return s;
+      const player = s.tournament.players.find((p) => p.id === id);
+      if (!player || player.addOnCount <= 0) return s;
+      const events = appendBuyInEvent(
+        s.tournament.buyInEvents ?? [],
+        id,
+        'remove_addon',
+        s.tournament.currentLevelIndex
+      );
+      const players = s.tournament.players.map((p) =>
+        p.id === id ? { ...p, addOnCount: p.addOnCount - 1 } : p
+      );
+      const prizeSnapshot = computePrizeSnapshot(players, s.tournament.prizeConfig);
+      const payoutStructure = calculatePayouts(prizeSnapshot.netPool, players.length);
+      return {
+        tournament: {
+          ...s.tournament,
+          players,
+          prizeSnapshot,
+          payoutStructure,
+          buyInEvents: events,
+        },
+      };
     });
   },
 

@@ -2,9 +2,11 @@ import { useTournamentStore } from '../../store/tournamentStore';
 
 export function PlayerRoster() {
   const tournament = useTournamentStore((s) => s.tournament);
-  const { removePlayer, eliminatePlayer, addRebuy, updatePlayer } = useTournamentStore();
+  const { removePlayer, eliminatePlayer, addRebuy, removeRebuy, updatePlayer } = useTournamentStore();
 
   if (!tournament) return null;
+
+  const isSetup = tournament.status === 'setup';
 
   const players = tournament.players;
   const activePlayers = players.filter((p) => p.status === 'active');
@@ -53,10 +55,22 @@ export function PlayerRoster() {
                 </div>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {player.buyInCount > 1 && (
+                  <button
+                    onClick={() => removeRebuy(player.id)}
+                    className="px-2 py-0.5 rounded text-xs bg-yellow-900/50 hover:bg-yellow-800/60
+                      text-yellow-400 transition-colors"
+                    title="Remove rebuy"
+                  >
+                    −Rebuy
+                  </button>
+                )}
                 <button
                   onClick={() => addRebuy(player.id)}
+                  disabled={isSetup}
                   className="px-2 py-0.5 rounded text-xs bg-yellow-800/40 hover:bg-yellow-700/60
-                    text-yellow-300 transition-colors"
+                    disabled:opacity-30 disabled:cursor-not-allowed text-yellow-300 transition-colors"
+                  title={isSetup ? 'Start the game to add rebuys' : 'Add rebuy'}
                 >
                   Rebuy
                 </button>

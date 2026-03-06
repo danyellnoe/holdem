@@ -1,7 +1,7 @@
 import { BlindStructure } from './blind';
 import { Player } from './player';
 import { Table } from './table';
-import { PrizeConfig, PrizePoolSnapshot, PayoutStructure } from './prize';
+import { PrizeConfig, PrizePoolSnapshot, PayoutStructure, BuyInEvent } from './prize';
 
 export type TournamentStatus =
   | 'setup'
@@ -36,6 +36,7 @@ export interface Tournament {
   completedAt: string | null;
   lastSavedAt: string;
   version: number;
+  buyInEvents?: BuyInEvent[];
 }
 
 export interface SavedTournamentMeta {

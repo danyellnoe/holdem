@@ -28,3 +28,13 @@ export interface PayoutStructure {
   totalPositionsPaid: number;
   customSpots: boolean;          // true if user overrode the auto-calculated count
 }
+
+export type BuyInEventType = 'rebuy' | 'addon' | 'remove_rebuy' | 'remove_addon';
+
+export interface BuyInEvent {
+  id: string;
+  playerId: string;
+  type: BuyInEventType;
+  timestamp: string;      // ISO 8601
+  levelIndex?: number;    // blind level when it happened (for context)
+}
