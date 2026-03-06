@@ -6,6 +6,7 @@ import { TablesPage } from './pages/TablesPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { PrizePage } from './pages/PrizePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { HelpPage } from './pages/HelpPage';
 import { RemotePage } from './pages/RemotePage';
 import { useTimer } from './hooks/useTimer';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="/players" element={<PlayersPage />} />
         <Route path="/prize" element={<PrizePage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/help" element={<HelpPage />} />
       </Route>
     </Routes>
   );
