@@ -1,9 +1,11 @@
 import { useTournamentStore } from '../store/tournamentStore';
 import { TableCard } from '../components/tables/TableCard';
+import { useState } from 'react';
 
 export function TablesPage() {
   const tournament = useTournamentStore((s) => s.tournament);
   const { addTable, autoBalanceTables } = useTournamentStore();
+  const [randomizeSeats, setRandomizeSeats] = useState(false);
 
   if (!tournament) {
     return <div className="p-6 text-gray-500">No tournament loaded.</div>;
@@ -27,13 +29,24 @@ export function TablesPage() {
         </div>
         <div className="flex items-center gap-2">
           {tournament.players.filter((p) => p.status === 'active').length > 0 && (
-            <button
-              onClick={autoBalanceTables}
-              className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white
-                text-sm font-semibold transition-colors"
-            >
-              Auto-balance
-            </button>
+            <>
+              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={randomizeSeats}
+                  onChange={(e) => setRandomizeSeats(e.target.checked)}
+                  className="rounded border-gray-500 bg-gray-700 text-blue-500 focus:ring-blue-500"
+                />
+                Randomize seats
+              </label>
+              <button
+                onClick={() => autoBalanceTables(randomizeSeats)}
+                className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white
+                  text-sm font-semibold transition-colors"
+              >
+                Auto-balance
+              </button>
+            </>
           )}
           <button
             onClick={addTable}

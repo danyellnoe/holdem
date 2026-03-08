@@ -46,7 +46,7 @@ interface TournamentStore {
   renameTable: (id: string, name: string) => void;
   assignPlayerToSeat: (playerId: string, tableId: string, seat: number) => void;
   removePlayerFromSeat: (playerId: string) => void;
-  autoBalanceTables: () => void;
+  autoBalanceTables: (randomizeSeats?: boolean) => void;
 
   // Prize
   updatePrizeConfig: (changes: Partial<PrizeConfig>) => void;
@@ -605,10 +605,17 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
     });
   },
 
-  autoBalanceTables: () => {
+  autoBalanceTables: (randomizeSeats = false) => {
     set((s) => {
       if (!s.tournament) return s;
-      const activePlayers = s.tournament.players.filter((p) => p.status === 'active');
+      let activePlayers = s.tournament.players.filter((p) => p.status === 'active');
+      if (randomizeSeats && activePlayers.length > 1) {
+        activePlayers = [...activePlayers];
+        for (let i = activePlayers.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [activePlayers[i], activePlayers[j]] = [activePlayers[j], activePlayers[i]];
+        }
+      }
       const activeTables = s.tournament.tables.filter((t) => t.isActive);
       if (activeTables.length === 0) return s;
 
