@@ -564,14 +564,35 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
   assignPlayerToSeat: (playerId, tableId, seatNum) => {
     set((s) => {
       if (!s.tournament) return s;
+      const targetTable = s.tournament.tables.find((t) => t.id === tableId);
+      const targetSeat = targetTable?.seats.find((seat) => seat.seatNumber === seatNum);
+      if (!targetTable || !targetSeat) return s;
+
+      const displacedPlayerIds = new Set<string>();
+      if (targetSeat.playerId && targetSeat.playerId !== playerId) {
+        displacedPlayerIds.add(targetSeat.playerId);
+      }
+      for (const player of s.tournament.players) {
+        if (
+          player.id !== playerId &&
+          player.tableId === tableId &&
+          player.seatNumber === seatNum
+        ) {
+          displacedPlayerIds.add(player.id);
+        }
+      }
+
       // Remove player from current seat first
       let tables = s.tournament.tables.map((t) => ({
         ...t,
         seats: t.seats.map((seat) =>
-          seat.playerId === playerId ? { ...seat, playerId: null } : seat
+          seat.playerId === playerId || (seat.playerId ? displacedPlayerIds.has(seat.playerId) : false)
+            ? { ...seat, playerId: null }
+            : seat
         ) as Seat[],
       }));
-      // Check if target seat is occupied — if so, swap or displace
+
+      // Assign the player to the requested seat after clearing any displaced occupant.
       tables = tables.map((t) => {
         if (t.id !== tableId) return t;
         return {
@@ -583,7 +604,11 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
         };
       });
       const players = s.tournament.players.map((p) =>
-        p.id === playerId ? { ...p, tableId, seatNumber: seatNum } : p
+        p.id === playerId
+          ? { ...p, tableId, seatNumber: seatNum }
+          : displacedPlayerIds.has(p.id)
+          ? { ...p, tableId: null, seatNumber: null }
+          : p
       );
       return { tournament: { ...s.tournament, tables, players } };
     });

@@ -58,13 +58,18 @@ export function PlayerAssignModal({
         </div>
         <div className="p-3 space-y-1 max-h-64 overflow-y-auto">
           {currentPlayer && (
-            <button
-              onClick={handleClear}
-              className="w-full text-left px-3 py-2 rounded-lg bg-red-900/20 hover:bg-red-900/40
-                text-red-300 text-sm transition-colors"
-            >
-              Clear seat (remove {currentPlayer.name})
-            </button>
+            <>
+              <button
+                onClick={handleClear}
+                className="w-full text-left px-3 py-2 rounded-lg bg-red-900/20 hover:bg-red-900/40
+                  text-red-300 text-sm transition-colors"
+              >
+                Clear seat (remove {currentPlayer.name})
+              </button>
+              <p className="px-1 pb-2 text-xs text-gray-500">
+                Assigning another player here will unseat {currentPlayer.name}.
+              </p>
+            </>
           )}
           {unseatedPlayers.length === 0 && !currentPlayer && (
             <p className="text-gray-500 text-sm text-center py-4">

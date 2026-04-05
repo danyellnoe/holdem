@@ -11,21 +11,63 @@ const DEBOUNCE_MS = 2000;
 export function useAutoSave() {
   const tournament = useTournamentStore((s) => s.tournament);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const versionRef = useRef<number>(-1);
+  const tournamentRef = useRef<typeof tournament>(null);
+  const snapshotRef = useRef<string | null>(null);
+  const tournamentIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!tournament) return;
-    // Skip if version hasn't changed
-    if (tournament.version === versionRef.current) return;
-    versionRef.current = tournament.version;
+    tournamentRef.current = tournament;
+  }, [tournament]);
+
+  useEffect(() => {
+    if (!tournament) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = null;
+      snapshotRef.current = null;
+      tournamentIdRef.current = null;
+      return;
+    }
+
+    const snapshot = JSON.stringify(tournament);
+
+    // Treat initial mount / tournament load as the new baseline instead of re-saving immediately.
+    if (tournamentIdRef.current !== tournament.id || snapshotRef.current === null) {
+      tournamentIdRef.current = tournament.id;
+      snapshotRef.current = snapshot;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = null;
+      return;
+    }
+
+    if (snapshot === snapshotRef.current) return;
+    snapshotRef.current = snapshot;
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      saveTournament(tournament);
+      if (tournamentRef.current) {
+        saveTournament(tournamentRef.current);
+      }
+      timerRef.current = null;
     }, DEBOUNCE_MS);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [tournament]);
+
+  useEffect(() => {
+    const flushPendingSave = () => {
+      if (!timerRef.current || !tournamentRef.current) return;
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      saveTournament(tournamentRef.current);
+    };
+
+    window.addEventListener('pagehide', flushPendingSave);
+
+    return () => {
+      window.removeEventListener('pagehide', flushPendingSave);
+      flushPendingSave();
+    };
+  }, []);
 }

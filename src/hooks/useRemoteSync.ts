@@ -62,7 +62,7 @@ export function useRemoteViewer() {
 
         // Start local countdown between syncs
         if (localIntervalRef.current) clearInterval(localIntervalRef.current);
-        if (payload.status === 'running') {
+        if (payload.status === 'running' || payload.status === 'on_break') {
           let lastTick = Date.now();
           localIntervalRef.current = setInterval(() => {
             const now = Date.now();
