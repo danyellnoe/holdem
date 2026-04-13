@@ -116,6 +116,7 @@ export function useTimer() {
       levelRemainingMs: state.levelRemainingMs,
       totalElapsedMs: state.totalElapsedMs,
       serverTimestamp: Date.now(),
+      tournament: useTournamentStore.getState().tournament,
     });
   }, []);
 

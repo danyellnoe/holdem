@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useTimerStore } from '../store/timerStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useTournamentStore } from '../store/tournamentStore';
+import { Tournament } from '../types/tournament';
 
 export type RemoteSyncPayload =
   | {
@@ -10,6 +12,7 @@ export type RemoteSyncPayload =
       levelRemainingMs: number;
       totalElapsedMs: number;
       serverTimestamp: number;
+      tournament: Tournament | null;
     }
   | { type: 'alert'; alertType: string };
 
@@ -59,6 +62,11 @@ export function useRemoteViewer() {
         timerStore.setLevelRemainingMs(adjustedRemaining);
         timerStore.setTotalElapsedMs(payload.totalElapsedMs);
         lastSyncRef.current = receivedAt;
+
+        // Sync tournament snapshot so RemoteView can render blinds / players / prizes
+        if (payload.tournament !== undefined) {
+          useTournamentStore.setState({ tournament: payload.tournament });
+        }
 
         // Start local countdown between syncs
         if (localIntervalRef.current) clearInterval(localIntervalRef.current);
