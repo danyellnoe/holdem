@@ -26,6 +26,7 @@ export default {
         'flash': 'flash 0.5s ease-in-out',
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in': 'fadeIn 0.3s ease-in',
+        'bounce-notice': 'bounceNotice 18s linear infinite alternate',
       },
       keyframes: {
         flash: {
@@ -35,6 +36,13 @@ export default {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(-4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        bounceNotice: {
+          '0%': { top: '8%', left: '8%' },
+          '25%': { top: '78%', left: '72%' },
+          '50%': { top: '70%', left: '15%' },
+          '75%': { top: '15%', left: '78%' },
+          '100%': { top: '8%', left: '8%' },
         },
       },
     },

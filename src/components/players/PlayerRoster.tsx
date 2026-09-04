@@ -2,7 +2,15 @@ import { useTournamentStore } from '../../store/tournamentStore';
 
 export function PlayerRoster() {
   const tournament = useTournamentStore((s) => s.tournament);
-  const { removePlayer, eliminatePlayer, addRebuy, removeRebuy, updatePlayer } = useTournamentStore();
+  const {
+    removePlayer,
+    eliminatePlayer,
+    addRebuy,
+    removeRebuy,
+    addAddOn,
+    removeAddOn,
+    updatePlayer,
+  } = useTournamentStore();
 
   if (!tournament) return null;
 
@@ -73,6 +81,25 @@ export function PlayerRoster() {
                   title={isSetup ? 'Start the game to add rebuys' : 'Add rebuy'}
                 >
                   Rebuy
+                </button>
+                {player.addOnCount > 0 && (
+                  <button
+                    onClick={() => removeAddOn(player.id)}
+                    className="px-2 py-0.5 rounded text-xs bg-green-900/50 hover:bg-green-800/60
+                      text-green-400 transition-colors"
+                    title="Remove add-on"
+                  >
+                    −Addon
+                  </button>
+                )}
+                <button
+                  onClick={() => addAddOn(player.id)}
+                  disabled={isSetup}
+                  className="px-2 py-0.5 rounded text-xs bg-green-800/40 hover:bg-green-700/60
+                    disabled:opacity-30 disabled:cursor-not-allowed text-green-300 transition-colors"
+                  title={isSetup ? 'Start the game to add add-ons' : 'Add add-on'}
+                >
+                  Add-on
                 </button>
                 <button
                   onClick={() => eliminatePlayer(player.id)}
