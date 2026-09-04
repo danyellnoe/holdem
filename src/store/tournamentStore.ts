@@ -8,6 +8,7 @@ import { PrizeConfig, BuyInEvent } from '../types/prize';
 import { BLIND_PRESETS, clonePreset, renumberLevels } from '../lib/blindPresets';
 import { calculatePayouts } from '../lib/payoutCalculator';
 import { saveTournament, loadTournament } from '../lib/localPersistence';
+import { canAddRebuy, canAddAddOn, canRemoveRebuy, canRemoveAddOn } from '../lib/buyInRules';
 
 interface TournamentStore {
   tournament: Tournament | null;
@@ -374,6 +375,8 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
   addRebuy: (id) => {
     set((s) => {
       if (!s.tournament) return s;
+      const player = s.tournament.players.find((p) => p.id === id);
+      if (!canAddRebuy(s.tournament, player).allowed) return s;
       const events = appendBuyInEvent(
         s.tournament.buyInEvents ?? [],
         id,
@@ -400,6 +403,8 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
   addAddOn: (id) => {
     set((s) => {
       if (!s.tournament) return s;
+      const player = s.tournament.players.find((p) => p.id === id);
+      if (!player || !canAddAddOn(s.tournament).allowed) return s;
       const events = appendBuyInEvent(
         s.tournament.buyInEvents ?? [],
         id,
@@ -427,7 +432,7 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
     set((s) => {
       if (!s.tournament) return s;
       const player = s.tournament.players.find((p) => p.id === id);
-      if (!player || player.buyInCount <= 1) return s;
+      if (!canRemoveRebuy(s.tournament, player).allowed) return s;
       const events = appendBuyInEvent(
         s.tournament.buyInEvents ?? [],
         id,
@@ -455,7 +460,7 @@ export const useTournamentStore = create<TournamentStore>()((set, get) => ({
     set((s) => {
       if (!s.tournament) return s;
       const player = s.tournament.players.find((p) => p.id === id);
-      if (!player || player.addOnCount <= 0) return s;
+      if (!canRemoveAddOn(s.tournament, player).allowed) return s;
       const events = appendBuyInEvent(
         s.tournament.buyInEvents ?? [],
         id,

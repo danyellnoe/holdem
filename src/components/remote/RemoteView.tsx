@@ -5,6 +5,7 @@ import { formatTime, formatElapsed } from '../../hooks/useTimer';
 import { useTournamentStore } from '../../store/tournamentStore';
 import { BlindLevel } from '../../types/blind';
 import { formatCurrency } from '../../lib/payoutCalculator';
+import { isAddOnBreak } from '../../lib/buyInRules';
 
 function formatBlindShort(level: BlindLevel): string {
   if (level.type === 'break') return level.breakLabel ?? 'Break';
@@ -30,12 +31,7 @@ export function RemoteView() {
   const currentLevel = levels[currentLevelIndex];
   const nextLevel = levels[currentLevelIndex + 1];
   const isBreak = currentLevel?.type === 'break';
-  const previousLevel = levels[currentLevelIndex - 1];
-  const isAddOnBreak =
-    isBreak &&
-    tournament?.settings.lateRegLevels !== 0 &&
-    previousLevel?.type === 'play' &&
-    previousLevel.levelNumber === tournament?.settings.lateRegLevels;
+  const isAddOnBreakNow = isAddOnBreak(tournament ?? null, currentLevelIndex);
 
   const isLow = levelRemainingMs <= 60_000 && levelRemainingMs > 0 && status === 'running';
 
@@ -89,7 +85,7 @@ export function RemoteView() {
       >
         {formatTime(levelRemainingMs)}
       </div>
-      {isAddOnBreak && (
+      {isAddOnBreakNow && (
         <div className="fixed z-10 max-w-[calc(100%-2rem)] rounded-lg bg-green-900/80 px-5 py-3
           text-center text-xl font-semibold text-green-100 shadow-lg animate-bounce-notice">
           Add-ons are now available until end of this break!
