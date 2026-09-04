@@ -26,8 +26,8 @@ export function BreakScreen({ onPause, onResume, onSkip }: BreakScreenProps) {
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur flex flex-col items-center justify-center gap-8">
       {isAddOnBreak && (
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 rounded-lg bg-green-900/80
-          px-5 py-3 text-center text-lg font-semibold text-green-100 shadow-lg">
+        <div className="absolute z-10 max-w-[calc(100%-2rem)] rounded-lg bg-green-900/80
+          px-5 py-3 text-center text-lg font-semibold text-green-100 shadow-lg animate-bounce-notice">
           Add-ons are now available until end of this break!
         </div>
       )}

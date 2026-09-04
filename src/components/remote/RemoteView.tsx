@@ -90,8 +90,8 @@ export function RemoteView() {
         {formatTime(levelRemainingMs)}
       </div>
       {isAddOnBreak && (
-        <div className="absolute top-24 rounded-lg bg-green-900/80 px-5 py-3 text-center
-          text-xl font-semibold text-green-100 shadow-lg">
+        <div className="fixed z-10 max-w-[calc(100%-2rem)] rounded-lg bg-green-900/80 px-5 py-3
+          text-center text-xl font-semibold text-green-100 shadow-lg animate-bounce-notice">
           Add-ons are now available until end of this break!
         </div>
       )}
