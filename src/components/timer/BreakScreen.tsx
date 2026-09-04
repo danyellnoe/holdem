@@ -1,6 +1,7 @@
 import { useTimerStore } from '../../store/timerStore';
 import { useTournamentStore } from '../../store/tournamentStore';
 import { formatTime } from '../../hooks/useTimer';
+import { isAddOnBreak } from '../../lib/buyInRules';
 
 interface BreakScreenProps {
   onPause: () => void;
@@ -16,16 +17,11 @@ export function BreakScreen({ onPause, onResume, onSkip }: BreakScreenProps) {
 
   const currentLevel = tournament?.structure.levels[currentLevelIndex];
   const breakLabel = currentLevel?.breakLabel ?? 'Break';
-  const previousLevel = tournament?.structure.levels[currentLevelIndex - 1];
-  const isAddOnBreak =
-    currentLevel?.type === 'break' &&
-    tournament?.settings.lateRegLevels !== 0 &&
-    previousLevel?.type === 'play' &&
-    previousLevel.levelNumber === tournament?.settings.lateRegLevels;
+  const isAddOnBreakNow = isAddOnBreak(tournament, currentLevelIndex);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur flex flex-col items-center justify-center gap-8">
-      {isAddOnBreak && (
+      {isAddOnBreakNow && (
         <div className="absolute z-10 max-w-[calc(100%-2rem)] rounded-lg bg-green-900/80
           px-5 py-3 text-center text-lg font-semibold text-green-100 shadow-lg animate-bounce-notice">
           Add-ons are now available until end of this break!

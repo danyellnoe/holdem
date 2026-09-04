@@ -1,4 +1,5 @@
 import { useTournamentStore } from '../../store/tournamentStore';
+import { canAddRebuy, canAddAddOn, canRemoveRebuy, canRemoveAddOn } from '../../lib/buyInRules';
 
 export function PlayerRoster() {
   const tournament = useTournamentStore((s) => s.tournament);
@@ -13,8 +14,6 @@ export function PlayerRoster() {
   } = useTournamentStore();
 
   if (!tournament) return null;
-
-  const isSetup = tournament.status === 'setup';
 
   const players = tournament.players;
   const activePlayers = players.filter((p) => p.status === 'active');
@@ -39,6 +38,10 @@ export function PlayerRoster() {
 
         {activePlayers.map((player) => {
           const table = tournament.tables.find((t) => t.id === player.tableId);
+          const rebuyEligibility = canAddRebuy(tournament, player);
+          const removeRebuyEligibility = canRemoveRebuy(tournament, player);
+          const addOnEligibility = canAddAddOn(tournament);
+          const removeAddOnEligibility = canRemoveAddOn(tournament, player);
           return (
             <div
               key={player.id}
@@ -66,38 +69,40 @@ export function PlayerRoster() {
                 {player.buyInCount > 1 && (
                   <button
                     onClick={() => removeRebuy(player.id)}
+                    disabled={!removeRebuyEligibility.allowed}
                     className="px-2 py-0.5 rounded text-xs bg-yellow-900/50 hover:bg-yellow-800/60
-                      text-yellow-400 transition-colors"
-                    title="Remove rebuy"
+                      disabled:opacity-30 disabled:cursor-not-allowed text-yellow-400 transition-colors"
+                    title={removeRebuyEligibility.reason ?? 'Remove rebuy'}
                   >
                     −Rebuy
                   </button>
                 )}
                 <button
                   onClick={() => addRebuy(player.id)}
-                  disabled={isSetup}
+                  disabled={!rebuyEligibility.allowed}
                   className="px-2 py-0.5 rounded text-xs bg-yellow-800/40 hover:bg-yellow-700/60
                     disabled:opacity-30 disabled:cursor-not-allowed text-yellow-300 transition-colors"
-                  title={isSetup ? 'Start the game to add rebuys' : 'Add rebuy'}
+                  title={rebuyEligibility.reason ?? 'Add rebuy'}
                 >
                   Rebuy
                 </button>
                 {player.addOnCount > 0 && (
                   <button
                     onClick={() => removeAddOn(player.id)}
+                    disabled={!removeAddOnEligibility.allowed}
                     className="px-2 py-0.5 rounded text-xs bg-green-900/50 hover:bg-green-800/60
-                      text-green-400 transition-colors"
-                    title="Remove add-on"
+                      disabled:opacity-30 disabled:cursor-not-allowed text-green-400 transition-colors"
+                    title={removeAddOnEligibility.reason ?? 'Remove add-on'}
                   >
                     −Addon
                   </button>
                 )}
                 <button
                   onClick={() => addAddOn(player.id)}
-                  disabled={isSetup}
+                  disabled={!addOnEligibility.allowed}
                   className="px-2 py-0.5 rounded text-xs bg-green-800/40 hover:bg-green-700/60
                     disabled:opacity-30 disabled:cursor-not-allowed text-green-300 transition-colors"
-                  title={isSetup ? 'Start the game to add add-ons' : 'Add add-on'}
+                  title={addOnEligibility.reason ?? 'Add add-on'}
                 >
                   Add-on
                 </button>
