@@ -16,9 +16,21 @@ export function BreakScreen({ onPause, onResume, onSkip }: BreakScreenProps) {
 
   const currentLevel = tournament?.structure.levels[currentLevelIndex];
   const breakLabel = currentLevel?.breakLabel ?? 'Break';
+  const previousLevel = tournament?.structure.levels[currentLevelIndex - 1];
+  const isAddOnBreak =
+    currentLevel?.type === 'break' &&
+    tournament?.settings.lateRegLevels !== 0 &&
+    previousLevel?.type === 'play' &&
+    previousLevel.levelNumber === tournament?.settings.lateRegLevels;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur flex flex-col items-center justify-center gap-8">
+      {isAddOnBreak && (
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 rounded-lg bg-green-900/80
+          px-5 py-3 text-center text-lg font-semibold text-green-100 shadow-lg">
+          Add-ons are now available until end of this break!
+        </div>
+      )}
       {/* Break label */}
       <div className="text-blue-400 text-2xl font-bold tracking-widest uppercase">
         {breakLabel}
